@@ -1,0 +1,519 @@
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.JFrame;
+//ตัวดักจับเหตุการณ์ เพื่อใช้ในการรับค่าจากการกระทำของผู้ใช้ สร้างตัวแปร startgame เพื่อใช้อ้างอิงคลาส Start 
+//และสร้างตัวแปร play เพื่อใช้อ้างอิงคลาส Play
+public class Main extends JFrame implements ActionListener{
+	static Start startgame;
+	static Play play;
+	public Main(){
+		startgame = new Start();
+		play = new Play();
+		this.add(startgame);
+		startgame.play.addActionListener(this);
+	}
+	public static void main(String[] args){
+		Main a = new Main();
+		a.setTitle("Catch the Egg");//ซ้ายบน
+		a.setSize(800,690);
+		a.setLocationRelativeTo(null);
+		a.setDefaultCloseOperation(a.EXIT_ON_CLOSE);
+		a.setVisible(true);
+	}
+	//action to play (ดักจับเหตุการณ์คลิ้กปุ่ม play)
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource()==startgame.play)
+		{
+			startgame.setVisible(false);
+			this.remove(startgame);
+			this.add(play);
+			this.setLocationRelativeTo(null);
+			this.setResizable(false);
+			play.refresh();
+		}
+	}
+	
+	
+}
+
+import java.awt.*;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+
+public class Start extends JPanel{
+	static Image bg;
+	static JButton play;
+	static ImageIcon imgplay;
+	
+	public Start(){
+		setLayout(new BorderLayout());
+		bg = Toolkit.getDefaultToolkit().getImage("img/bg1.jpg");
+		imgplay = new ImageIcon("img/button-play.jpg");
+		play = new JButton(imgplay);
+		setLayout(null);
+		play.setBounds(280, 530, 250, 100);
+		this.add(play);
+	}
+	
+	public void paintComponent (Graphics g){
+		g.drawImage(bg,0,0,this);
+	}
+}
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import static java.lang.Thread.sleep;
+import static javax.management.Query.times;
+
+import javax.swing.*;
+
+public class Play extends JPanel implements KeyListener {//implements = method ของคลาส เป็นส่วนที่ถูกซ่อนไว้ไม่สามารถเห็นได้จากภายนอกคลาส
+
+    static Image bg, gameover, bg03;
+    static Basket basket;
+    static Chicken chicken;
+    static Egg1 egg1;
+    static Egg2 egg2;
+    static Egg3 egg3;
+
+    static int dx = 10;//ตัวแปรส่งค่าตำแหน่งดักจับ
+    static int sum = 0;//เก็บค่าของไข่ใบขาว
+    static int sum2 = 0;
+    static int sum3 = 0;
+    static int times = 0;
+    static int interval = 0;//นับเวลา
+
+    Timer timer = new Timer(20, new TimerListener());
+
+    public Play() {
+        this.t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                /*
+                 * while (true) { boolean timestart = false; if (timestart == false) { int times
+                 * = 0; times = times - 1; boolean boom_bool = false; if (boom_bool) { int
+                 * time_boom = 0; time_boom--; }
+                 * 
+                 * } try { Thread.sleep(1000); } catch (InterruptedException e) {
+                 * e.printStackTrace(); }
+                 * 
+                 * }
+                 */
+            }
+        });
+        timer.start();
+        setLayout(new BorderLayout());
+        basket = new Basket();
+        chicken = new Chicken();
+        egg1 = new Egg1();
+        egg2 = new Egg2();
+        egg3 = new Egg3();
+        times = 60;
+        interval = 0;
+
+        setLayout(null);
+        // เพิ่ม keylistener focus
+        this.addKeyListener(this);
+        this.setFocusable(true);
+        this.requestFocusInWindow();
+    }
+
+    class TimerListener implements ActionListener {
+        // @Override
+
+        public void actionPerformed(ActionEvent e) {
+            repaint();
+        }
+    }
+
+    Thread t;
+
+    @SuppressWarnings("empty-statement")
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        g.drawImage(bg, 0, 0, this);
+        sum = egg1.getScore();
+        sum2 = egg2.getLife();
+        sum3 = egg3.getLife();
+        
+        g.drawString("Score " + sum, 20, 40);
+        g.drawString("Life : " + sum2, 20, 60);
+        g.drawString("Life : " + sum3, 20, 60);
+
+        // เวลา
+        interval++;
+        System.out.println("interval : " + interval);
+        if (interval == 2) {
+            interval = 0;
+            times--;
+        }
+
+        g.drawString("Time " + times, 350, 50);
+
+        g.drawImage(basket.basket, basket.xBasket, basket.yBasket, this);
+        chicken.run();// เพื่อให้คลาสไก่ทำงาน วาดไก่และไข่ลงในคลาส และเรียกรูปภาพ bg2.jpg
+        // มาเก็บในตัวแปร bg
+        egg1 = new Egg1();
+        g.drawImage(chicken.chicken, chicken.xChicken, chicken.yChicken, this);
+        g.drawImage(egg1.egg1, egg1.xEgg1, egg1.yEgg1, this);
+        g.drawImage(egg2.egg2, egg2.xEgg2, egg2.yEgg2, this);
+         g.drawImage(egg3.egg3, egg3.xEgg3, egg3.yEgg3, this);
+
+        bg = Toolkit.getDefaultToolkit().getImage("img/bg2.jpg");
+
+        // check gameover
+        if (egg1.life <= 0 || egg1.score < 0 || times < 0) {
+
+            g.drawImage(gameover, 0, 0, this);
+            g.drawImage(gameover, 0, 0, this);
+            g.setFont(new Font("Angsana New", Font.BOLD, 60));
+            g.drawString("Score : " + sum, 500, 400);
+            g.drawString("Life : " + sum2, 500, 500);
+            egg1.stop = 1;
+            egg1.fall = false;
+            gameover = Toolkit.getDefaultToolkit().getImage("img/gameover.jpg");
+
+        } else if (egg1.score < 0) {// 0แต้มเกมจบ
+
+            g.drawImage(gameover, 0, 0, this);
+            g.setFont(new Font("Angsana New", Font.BOLD, 60));
+            g.drawString("Score : " + sum, 500, 400);
+            g.drawString("Life : " + sum2, 500, 500);
+            egg1.stop = 1;
+            egg1.fall = false;
+            gameover = Toolkit.getDefaultToolkit().getImage("img/gameover.jpg");
+            System.out.println("life : " + getLocale());
+        } else if (Egg1.score >= 5) {//ด่าน2
+
+            g.drawImage(bg03, 0, 0, this);
+            bg = Toolkit.getDefaultToolkit().getImage("img/bg03.jpg");
+
+            interval++;
+            System.out.println("interval : " + interval);
+
+        } else if (egg1.score < 0) {
+            gameover = Toolkit.getDefaultToolkit().getImage("img/gameover.jpg");
+
+        //} else if (times < 0) {
+            // gameover = Toolkit.getDefaultToolkit().getImage("img/gameover.jpg");
+        }
+
+        egg1 = new Egg1();
+        Egg2 egg2 = new Egg2();
+    }
+
+    // เมธอด refresh ทำให้เเป้นพิมพ์กดได้ โดยให้ timer เริ่มใหม่และตั้งค่า Focus
+    // ใหม่
+    public void refresh() {
+        // timer.start();
+        this.setFocusable(true);
+        this.requestFocusInWindow();
+
+    }
+
+    // คำสั่งkeybord
+    // @Override
+    public void keyPressed(KeyEvent e) {
+        e.getKeyCode();
+        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+            if (basket.xBasket >= 660) {
+                dx *= -1;
+            }
+            basket.xBasket = basket.xBasket + dx;
+            dx = 10;
+        }
+        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+            if (basket.xBasket <= 0) {
+                dx *= -1;
+            }
+            basket.xBasket = basket.xBasket - dx;
+            dx = 10;
+        }
+
+    }
+
+    // @Override
+    public void keyReleased(KeyEvent e) {
+
+    }
+    // @Override
+
+    public void keyTyped(KeyEvent e) {
+
+    }
+}
+
+import java.awt.Image;
+import java.awt.Toolkit;
+
+public class Chicken {
+	static Image chicken;
+	static int xChicken = 300;
+	static int yChicken = 25;
+	
+	public void run()
+	{
+		//ทำให้ไข่เคลื่อนที่ช้าลง
+		/*for(int i=0;i<200;i++){
+			
+		}*/
+		xChicken = 1 + (int)(Math.random() * ((600 - 1) + 1));
+		
+		try {
+			Thread.sleep(500);
+                     
+			//thrade check to in running
+                 
+                } catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        }
+	
+	public Chicken(){
+		chicken = Toolkit.getDefaultToolkit().getImage("img/chicken2.png");
+	}
+        
+}
+import java.awt.Image;
+import java.awt.Toolkit;
+
+public class Basket {
+	static Image basket;
+	static int xBasket = 300;
+	static int yBasket = 560;
+	public Basket(){
+		basket = Toolkit.getDefaultToolkit().getImage("img/basket.png");
+	}
+}
+
+import java.awt.Image;
+import java.awt.Toolkit;
+
+public class Egg1{
+	static Chicken chicken;
+	static Basket basket;
+	static Image egg1 ;
+	static int xEgg1 = 0;
+	static int yEgg1 = 200;
+        static int score = 0;
+	static int life = 3;
+	public int stop = 0;
+	protected int chkdownLift;
+	static boolean fall=true;
+	static boolean chkupScore=true;
+	static boolean chkdownScore=true;
+	static boolean chkdownLife=true;
+
+	Thread run = new Thread(new Runnable() {
+		public void run() {
+			while(fall){
+				try{
+					Thread.sleep(1000);
+				}catch(InterruptedException e){}
+			//การเช็คว่าไข่ลงตะกร้าหรือไม่ หากลง ตำแหน่ง x ของไข่ต้องมากกว่าตำแหน่ง x ของตะกร้าทางด้านซ้าย 
+					//และน้อยกว่าตำแหน่ง x ของตะกร้าด้านขวา และตำแหน่ง y ของไข่มากกว่าตำแหน่ง y ของตะกร้า – 10 หากไม่ตรงกับ
+				//yEgg1 += 10;	
+				if(xEgg1>=basket.xBasket && xEgg1<=basket.xBasket+90 && yEgg1>=basket.yBasket-10){
+					
+					//while(chkupScore)
+					//{
+						upScore();
+						xEgg1 = chicken.xChicken;
+						yEgg1 = 200;
+						chkupScore = false;
+					//}
+					chkupScore=true;
+					System.out.println("if score : "+score);
+					
+				}
+			
+				else if(yEgg1>basket.yBasket+75){
+					//while(chkdownLife)
+					//{
+						//downScore();
+						
+						score --;
+						life --;
+							//กรณีที่ไข่ไม่ลงตะกร้า 
+						
+						xEgg1 = chicken.xChicken;
+						yEgg1 = 200; 
+						//yEgg1 กลับขึ้นไปที่ตน.ที่200
+						chkdownLife = false;
+						
+					//}
+					chkdownLife = true;
+					System.out.println("else score : "+score);
+					
+				}
+				
+				
+			}
+		}
+	});
+	//public int getScore;
+	//public int getLife;
+    private int yEgg2;
+    private final Image egg2;
+    private int yEgg3;
+    private final Image egg3;
+	
+	public void upScore(){
+		score=score+1;
+	
+	}
+	//เมธอด getScore ใช้เพื่อคืนค่าคะแนน
+	public int getScore(){
+		return score;
+	}
+	public int getLife(){
+		return life;
+	}
+	public void downScore(){
+		score=score-1;
+		life=life-1;
+		System.out.println("life : "+life);
+		
+	}
+	
+	//public void downScore2(){
+		//score -= 10;
+	//}
+	
+	public Egg1() {
+
+		chicken = new Chicken();
+		basket = new Basket();
+		if (xEgg1 == 0) {
+			xEgg1 = chicken.xChicken;
+		}
+		if (score >= 5) {
+			yEgg1 = yEgg1 + 35;
+                        yEgg2 = yEgg2 +35;
+                        yEgg3 = yEgg3 +35;
+		} else {
+			yEgg1 = yEgg1 + 15;
+                        yEgg2 = yEgg2 + 15;
+                        yEgg3 = yEgg3 +35;
+		}
+		egg1 = Toolkit.getDefaultToolkit().getImage("img/egg1.png");
+                egg2 = Toolkit.getDefaultToolkit().getImage("img/egg2.png");
+                egg3 = Toolkit.getDefaultToolkit().getImage("img/egg3.jpg");
+		run.start();
+
+	}
+		
+
+		
+}
+
+import java.awt.Image;
+import java.awt.Toolkit;
+
+public class Egg2{
+	static Chicken chicken;
+	static Basket basket;
+	static Image egg2 ;
+	static int xEgg2 = 0;
+	static int yEgg2 = 200;
+	static int score = 0;
+	static int life = 3;
+	public int stop = -1;
+	protected int chkdownLift;
+	static boolean fall=true;
+	static boolean chkupScore=false;
+	static boolean chkdownScore=true;
+	static boolean chkdownLife=true;
+
+	Thread run;
+	
+	public void upScore(){
+		score=score+1;
+	
+	}
+	//เมธอด getScore ใช้เพื่อคืนค่าคะแนน
+	public int getScore(){
+		return score;
+	}
+	public int getLife(){
+		return life;
+	}
+	public void downScore(){
+		score=score-1;
+		life=life-1;
+		System.out.println("life : "+life);
+		
+	}
+
+	public Egg2(){
+        this.run = new Thread(new Runnable() {
+
+            public void run() {
+                while(fall){
+                    try{
+                        Thread.sleep(200);
+                    }catch(InterruptedException e){}
+                    //การเช็คว่าไข่ลงตะกร้าหรือไม่ หากลง ตำแหน่ง x ของไข่ต้องมากกว่าตำแหน่ง x ของตะกร้าทางด้านซ้าย
+                    //และน้อยกว่าตำแหน่ง x ของตะกร้าด้านขวา และตำแหน่ง y ของไข่มากกว่าตำแหน่ง y ของตะกร้า – 10 หากไม่ตรงกับ
+                    //yEgg1 += 10;
+                    if(xEgg2>=Basket.xBasket && xEgg2<=Basket.xBasket+90 && yEgg2>=basket.yBasket-10){
+                        
+                        //while(chkdownScore)
+                        //{
+                        
+                        score --;
+                        life --;
+                        xEgg2 = chicken.xChicken;
+                        yEgg2 = 200;
+                        chkdownScore = true;
+                        //}
+                        chkdownScore=false;
+                        System.out.println("if score : "+score);
+                        
+                    }
+                    
+                    
+                    else if(yEgg2>basket.yBasket+75){
+                        //while(chkdownScore)
+                        //{
+                        
+                        //กรณีที่ไข่ไม่ลงตะกร้า
+                        
+                        xEgg2 = Chicken.xChicken;
+                        yEgg2 = 200;
+                        //yEgg1 กลับขึ้นไปที่ตน.ที่200
+                        chkdownLife = true;
+                        
+                        //}
+                        chkdownLife = false;
+                        System.out.println("else score : "+score);
+                        
+                    }
+                    
+                    
+                    
+                }
+            }
+        });
+			
+		chicken = new Chicken();
+		basket = new Basket();
+		if(xEgg2==0){
+			xEgg2 = Chicken.xChicken;
+		}
+		
+		yEgg2 = yEgg2+35;
+		egg2 = Toolkit.getDefaultToolkit().getImage("img/egg2.png");
+		run.start();
+		
+	}
+		
+	
+}
